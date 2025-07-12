@@ -1,0 +1,171 @@
+---
+title: "PC1 - PRÁCTICA 3"
+format: html
+editor: visual
+---
+
+# **GRUPO 2**
+
+**INTEGRANTES:**
+
+-   Chacon Portilla Piero Victor
+
+-   Hernandez Luna Maria Jose
+
+-   Palomino Meza Vania Eva
+
+-   Reyes Guillen Ariana
+
+-   Silva Vargas Jamaira
+
+# Instalando y cargando paquetes
+
+Para trabajar con nuestra data autismo debemos instalar y cargar los siguientes paquetes
+
+```{r}
+#install.packages("gtsummary")
+#install.packages("finalfit")
+#install.packages("flextable")
+```
+
+```{r}
+library(tidyverse)
+library(here)
+library(rio)
+library(gtsummary) 
+library(finalfit)
+library(flextable)
+```
+
+# Cargar datos
+
+Cargaremos los datos correspondientes a la tabla de autismo
+
+```{r}
+data_autismo <- import(here("data", "autismo.csv"))
+```
+
+Utilizaremos la función str para la visualización de la estructura de los datos
+
+```{r}
+str(data_autismo)
+```
+
+## Variables categóricas
+
+**A continuación resumiremos las variables categóricas usando las frecuencias simples y frecuencias porcentuales**
+
+```{r}
+table(data_autismo$Etnicidad, useNA = "ifany")
+```
+
+```{r}
+table(data_autismo$Pais_residencia, useNA = "ifany")
+```
+
+**Empleando el Tidyverse**
+
+```{r}
+data_autismo |> 
+  dplyr::count(Genero, sort = TRUE)
+```
+
+## Variables continuas
+
+Tenemos las funciones mean y sd para calcular el promedio y la división standar de esta manera resumiremos nuestras variables continuas o numéricas
+
+```{r}
+mean(data_autismo$Puntuacion_P1, na.rm = TRUE)
+```
+
+```{r}
+sd(data_autismo$Puntuacion_P1, na.rm = TRUE)
+```
+
+**Funciones con min, max, median, IQR**
+
+```{r}
+min(data_autismo$Puntuacion_P1, na.rm = TRUE) 
+
+IQR(data_autismo$Puntuacion_P1, na.rm = TRUE) 
+
+median(data_autismo$Puntuacion_P1, na.rm = TRUE)
+```
+
+Con estos resultados podemos deducir que los datos tienen una distribución simétrica dado que la media y mediana de la variable Puntuacións_P1 son similares.
+
+**Utilizaremos la función summary para calcular todas las medidas a la vez con la variable RESULTADOS**
+
+```{r}
+summary(data_autismo$Resultado)
+```
+
+Realizaremos el resumen de datoa por otra variable
+
+```{r}
+data_autismo |> 
+  group_by(Puntuacion_P2) |> 
+  summarise(n_observ = n(),
+            porcentaje = (n_observ / nrow(data_autismo)*100))
+```
+
+# **Usaremos la función Gtsummary para la Tabla 1**
+
+```{r}
+data_autismo |> 
+  select(Edad, Genero, Etnicidad, Pais_residencia, Diagnostico_autismo) |> 
+  tbl_summary()
+```
+
+**Configuraremos el estilo e idioma de nuestra Tabla 1**
+
+```{r}
+theme_gtsummary_language(language = "es") 
+theme_gtsummary_journal(journal = "jama")
+```
+
+```{r}
+data_autismo |> 
+  select(Edad, Genero, Etnicidad, Pais_residencia, Diagnostico_autismo) |> 
+  tbl_summary()
+```
+
+**A continuación procederemos a recodificar variables y a adicionar los nombres correctos**
+
+```{r}
+data_autismo_0 = data_autismo |>
+  mutate(Edad = ff_label(Edad, "Edad (años)"),
+    
+    Quien_completa_prueba = ff_label(Quien_completa_prueba, "Apoderado"),
+    
+    Ictericia_al_nacer = ff_label(Ictericia_al_nacer,"hiperbilirrubinemia neonatal"),
+    
+    Diagnostico_autismo = as.factor (Diagnostico_autismo) |>
+      fct_recode("Sí" = "Si",
+                 "No" = "No") |>
+      fct_relevel("Sí", "No") |> 
+      ff_label("Autismo"),
+    
+    
+    Diagnostico_ASD = ff_label(Diagnostico_ASD, "Diagnostico del trastorno del espectro autista")
+    )
+```
+
+## Trabajando con la variable dependiente 
+
+```{r}
+tabla_1.v2 = data_autismo_0 |> 
+  select(Edad, Genero, Etnicidad, Pais_residencia, Diagnostico_autismo) |> 
+  tbl_summary(by = Diagnostico_autismo) |> 
+  modify_spanning_header(all_stat_cols() ~ "**Trastorno del espectro autista**") |>
+  add_overall() 
+```
+
+```{r}
+tabla_1 = data_autismo_0 |> 
+  select(Edad, Genero, Etnicidad, Pais_residencia, Diagnostico_autismo) |> 
+  tbl_summary(by = Diagnostico_autismo) |> 
+  modify_spanning_header(all_stat_cols() ~ "**Trastorno del espectro autista**") |>
+  add_overall() |> 
+  modify_caption("**Tabla 1**. Características de los pacientes con presunción diagnóstica de trastorno del espectro autista")
+```

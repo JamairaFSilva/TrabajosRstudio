@@ -1,0 +1,162 @@
+---
+title: "Practica_calificada_07"
+format: html
+editor: visual
+---
+
+## Integrantes:
+
+-   Chacon Portilla Piero Victor
+
+-   Hernandez Luna Maria Jose
+
+-   Palomino Meza Vania Eva
+
+-   Reyes Guillen Ariana
+
+-   Silva Vargas Jamaira
+
+## PRÁCTICA DE SEMANA 9
+
+Descargamos el paquete "car" el cual es útil para el análisis de regresión aplicada, las funciones que tienen permiten evaluar y mejorar modelos, facilita pruebas estadísticas y análisis de varianza, además de proporcionar gráficos útiles para analizar la relación entre variables:
+
+```{r}
+install.packages("car")
+```
+
+E instalamos los siguientes paquetes:
+
+```{r}
+library(tidyverse)
+library(here)
+library(rio)
+library(gtsummary)
+library(car)
+
+```
+
+Importamos nuestra data de trabajo:
+
+```{r}
+data_autismo <- import(here("data", "autismo.csv"))
+```
+
+La regresión es una técnica que se emplea para analizar la relación entre una variable dependiente (también conocida como resultado o Y) y una o más variables independientes (o predictoras, como X1, X2, ..., Xk). En el caso de los modelos de regresión lineal simple (o univariada), se considera únicamente una variable independiente o predictora X.
+
+Trabajamos con nuestra data de autismo en donde el desenlace *Y* de interés para este ejercicio es la variable Resultado. Podemos revisar su distribución y el promedio en en un histograma:
+
+```{r}
+data_autismo |>  
+  ggplot(aes(x = Resultado)) +
+  geom_histogram(
+    color = "skyblue",
+    ) + 
+  labs(y = "Puntaje", 
+       x = "Resultado") +
+  geom_vline(xintercept = mean(data_autismo$Resultado, na.rm = TRUE),
+             color = "pink", size = 1.5)
+```
+
+Para hallar el promedio utilizamos la función mean:
+
+```{r}
+mean(data_autismo$Resultado, na.rm = TRUE)
+```
+
+El método de regresión lineal simple determina la recta que representa de manera más adecuada la relación lineal entre las variables de nuestra elección que son Resultado y Edad, tal como se observa en la siguiente figura:
+
+```{r}
+plot(Edad ~ Resultado , data = data_autismo,
+     col = "skyblue",
+     ylab = "Edad",
+     xlab = "Resultado",
+     las = 1,
+     pch = 20, 
+     font.lab = 2, font.axis = 2) 
+
+abline(lm(Resultado ~ Edad , data = data_autismo), lwd = 2, col = "pink")
+```
+
+Ahora emplearemos la función lm() (linear model) con el fin de ajustar un modelo de regresión líneal. En la función, es necesario especificar como argumentos el resultado X, la variable predictora Y y el conjunto de datos que contiene dichas variables. Esta es la forma en que se estructura el ajuste del modelo utilizando la función lm: lm(y \~ x, data = mis_datos):
+
+```{r}
+modelo_ejemplo = lm(Resultado ~ Edad, data = data_autismo)
+```
+
+Comprobamos los resultados con la función summary() y dentro, el objeto modelo_ejemplo:
+
+```{r}
+summary(modelo_ejemplo)
+```
+
+Finalmente visualizamos la sección Coefficients del resultado:
+
+```{r}
+summary(modelo_ejemplo)$coef
+```
+
+Dentro de la columna Estimate encontramos el modelo que mejor se ajusta que tiene un intercepto de 5.2500000.
+
+## PRÁCTICA DE SEMANA 10
+
+### a. Documentación de la interpretación de los métodos de regresión
+
+#### Primer método: Regresión lineal simple
+
+Exploramos la relación entre una sola variable predictora y una variable de resultado continua. Aquí, predeciremos el Resultado total del test a partir de Puntuacion_P1.
+
+```{r}
+modelo1 <- lm(Resultado ~ Puntuacion_P1, data = data_autismo)
+
+summary(modelo1)
+```
+
+El modelo estima un coeficiente que indica cuánto cambia, en promedio, el valor de la variable dependiente cuando la predictora varía. También proporciona un valor de R², que representa el porcentaje de variación explicada por el modelo. Este tipo de regresión es útil como aproximación inicial, aunque limitada en su capacidad explicativa por considerar solo una variable. En conclusión, este primer modelo permite verificar si la puntuación en la primera pregunta tiene una relación significativa con el resultado total del test.
+
+#### Segundo método: Regresión lineal múltiple
+
+La regresión lineal múltiple amplía el análisis al incorporar varias variables predictoras con el fin de explicar mejor la variación de una variable dependiente continua. Aquí incluimosa las variables de Puntuacion_P1, P2, P3, P4 como predictores del Resultado.
+
+```{r}
+modelo2 <- lm(Resultado ~ Puntuacion_P1 + Puntuacion_P2 + Puntuacion_P3 + Puntuacion_P4, data = data_autismo)
+
+summary(modelo2)
+```
+
+Este modelo estima el efecto individual de cada predictor, controlando el efecto de los demás, y mejora la precisión del modelo al considerar múltiples factores relevantes. El coeficiente de determinación R² suele aumentar con respecto al modelo simple, ya que se incorpora más información al análisis. Este método es útil para identificar los predictores más influyentes y obtener una visión integral del fenómeno estudiado.
+
+Nos permite identificar qué preguntas del test son las que más contribuyen al resultado total, y mejora el ajuste del modelo al considerar múltiples factores.
+
+#### Tercer método: Regresión logística binaria
+
+La regresión logística binaria se emplea cuando la variable dependiente es categórica y toma dos posibles valores, como la presencia o ausencia de una condición. Este modelo estima la probabilidad de que ocurra un evento (por ejemplo, un diagnóstico) en función de un conjunto de variables predictoras. Los coeficientes obtenidos indican cómo cambia la probabilidad del evento según el valor de cada predictor, expresados inicialmente en log-odds. Se puede predecir una variable categórica binaria. En este caso, predecimos Diagnostico_ASD (Sí/No) en función de variables como puntuaciones y antecedentes:
+
+```{r}
+data_autismo$Diagnostico_ASD <- as.factor(data_autismo$Diagnostico_ASD)
+
+modelo3 <- glm(Diagnostico_ASD ~ Puntuacion_P1 + Puntuacion_P2 + Genero + Ictericia_al_nacer,
+               data = data_autismo, family = binomial)
+
+summary(modelo3)
+```
+
+Este método es fundamental en situaciones donde se requiere tomar decisiones basadas en la probabilidad de pertenecer a una categoría específica, especialmente en el ámbito clínico y epidemiológico. Permite estimar la probabilidad de que un individuo reciba un diagnóstico de autismo según ciertas características, útil para tareas de clasificación
+
+### b. Documenta la aplicación pruebas de bondad de ajuste y de al menos 1 método de regresión.
+
+La prueba de bondad de ajuste en un modelo lineal evalúa qué tan bien las variables independientes explican la variabilidad de la variable dependiente, usando principalmente el coeficiente R², que indica la proporción de variabilidad explicada por el modelo.
+
+La función par ( ) permite configurar parámetros gráficos, como dividir la ventana en múltiples paneles con par(mfrow ) = c(1, 2), lo cual facilita comparar gráficos lado a lado, por ejemplo, los valores ajustados frente a los residuales y un QQ plot de los residuales. Por su parte, plot ( ) permite visualizar estas relaciones; al graficar los residuales versus los valores ajustados:
+
+```{r}
+par(mfrow = c(2, 2))
+plot(modelo2)
+```
+
+En Residuals vs Fitted evalua si existe una relación no lineal entre las variables o si hay problemas de heterocedasticidad. Como los puntos se dispersan de manera uniforme, se sugiere que la relación entre las variables es adecuadamente lineal.
+
+El segundo gráfico Normal Q-Q, verifica si los residuos del modelo siguen una distribución normal. En este caso los puntos siguen bastante bien la línea, con ligeras desviaciones en los extremos, lo cual es aceptable. Esto indica que la normalidad de los residuos es razonable.
+
+En Scale-Location, se examina si la varianza de los residuos es constante en todos los niveles de los valores ajustados (homocedasticidad). Los puntos se ven bien distribuidos lo cual refuerza la idea de que la varianza de los errores es constante.
+
+Finalmente, el gráfico Residuals vs Leverage busca identificar observaciones influyentes, es decir, puntos que tienen un gran impacto en los parámetros del modelo. Como no se observan puntos alejados del grupo general significa que no hay evidencia de datos con una influencia desproporcionada.

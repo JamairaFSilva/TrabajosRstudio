@@ -1,0 +1,90 @@
+---
+import---
+title: "Practica01_2_grupo2"
+format: html
+editor: visual
+---
+
+## Grupo 2
+
+-   Jamaira Silva
+
+-   Maria Jose Hernandez
+
+-   Vania Palomino
+
+-   Piero Chacon
+
+-   Ariana Reyes
+
+## Importando autismo.csv usando el paquete rio
+
+```{r}
+data_autismo = import(here ("data","autismo.csv"))
+```
+
+## Conociendo el contenido de nuestra data autismo
+
+Una vez importada nuestra data visualizaremos el número de filas y el número de columnas con la función dim:
+
+```{r}
+dim(data_autismo)
+```
+
+También podemos inspeccionar cuántos y que tipos de variables tenemos en nuestra data con str:
+
+```{r}
+str(data_autismo)
+```
+
+Finalmente, podemos generar una visualización del documento:
+
+```{r}
+#visdat::vis_dat(data_autismo)
+```
+
+## Limpiando datos 
+
+### Corrigiendo los nombres de variables
+
+A continuación vamos a corregir los valores de nuestras variables, para ello trabajaremos en un documento con un nuevo nombre a través de la función janitor.
+
+```{r}
+data_autismo_1 = clean_names(data_autismo)
+```
+
+Podemos observar los nombres de las columnas del dataset:
+
+```{r}
+names(data_autismo)
+```
+
+```{r}
+names(data_autismo_1)
+```
+
+Convertimos celdas vacías a NA
+
+```{r}
+data_autismo_2 = mutate_if(data_autismo_1, is.character, list(~na_if(.,"")))
+```
+
+Vamos a colapsar una variable categórica en menos niveles
+
+```{r}
+data_autismo_2 |> count(edad)
+```
+
+## Transformación 
+
+Transformación a logaritmo
+
+```{r}
+summary(data_autismo_2$timepo_desde_diagnostico_a)
+```
+
+```{r}
+data_autismo_3 <- data_autismo_2 |>  
+  mutate(log_años_desde_dx = (log(resultado + 1)))
+
+```
